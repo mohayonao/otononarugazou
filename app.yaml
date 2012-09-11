@@ -1,0 +1,25 @@
+application: otononarugazou
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: /(css|js|img)/(.*)
+  static_files: static/\1/\2
+  upload: static/(css|js|img)/(.*)
+
+- url: /favicion.ico
+  static_files: static/img/favicon.ico
+  upload: static/img/favicon.ico
+  
+- url: /((.+)\.png|upload|list|get_upload_url)
+  script: main.app
+
+- url: .*
+  static_files: static/html/index.html
+  upload: static/html/index.html
+  
+libraries:
+- name: webapp2
+  version: "2.5.1"
