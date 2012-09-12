@@ -97,6 +97,11 @@ $ ->
             else showAlert 'よく分からないファイル形式です。'
         false
 
+    $('#tweet').show().on 'click', ->
+        text = '音の鳴る画像です'
+        url  = location.href
+        window.open "https://twitter.com/share?url=#{encodeURIComponent(url)}&text=#{encodeURIComponent(text)}"
+
     # for timber ###############################################################
     unless timbre?.isEnabled
         return $('#desc-for-nosound').show()

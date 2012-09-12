@@ -135,6 +135,12 @@
       }
       return false;
     });
+    $('#tweet').show().on('click', function() {
+      var text, url;
+      text = '音の鳴る画像です';
+      url = location.href;
+      return window.open("https://twitter.com/share?url=" + (encodeURIComponent(url)) + "&text=" + (encodeURIComponent(text)));
+    });
     if (!(typeof timbre !== "undefined" && timbre !== null ? timbre.isEnabled : void 0)) {
       return $('#desc-for-nosound').show();
     }
