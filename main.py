@@ -19,8 +19,8 @@
 
 import os
 import webapp2
-import logging
 
+from google.appengine.api import memcache
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext.webapp import blobstore_handlers
@@ -32,22 +32,19 @@ class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
         files = self.get_uploads('file')
         if len(files) != 1:
-            logging.warning('UploadError: len(files) is 0')
-            self.redirect('/')
-            return
+            return self.error(404)
         blob_info = files[0]
-        logging.info("CONTENT-TYPE: %s" % blob_info.content_type)
         if blob_info.content_type != 'image/png':
             blob_info.delete()
-            self.redirect('/')
-            return
+            return self.error(404)
         key = str(files[0].key())
         glist = GazouKeyList.get_or_insert('recent')
         glist.data.insert(0, key)
         glist.data = glist.data[:12]
         glist.save()
         
-        logging.info('upload: key=%s' % key)
+        memcache.set('recent', glist.data)
+        
         self.response.out.write(key)
         
 class ServeHandler(blobstore_handlers.BlobstoreDownloadHandler):        
@@ -60,9 +57,12 @@ class ServeHandler(blobstore_handlers.BlobstoreDownloadHandler):
         
 class ListHandler(webapp2.RequestHandler):
     def get(self):
-        glist = GazouKeyList.get_or_insert('recent')
+        glist = memcache.get('recent')
+        if glist is None:
+            glist = GazouKeyList.get_or_insert('recent').data
+            memcache.set('recent', glist)
         self.response.headers['Content-Type'] = 'application/json'
-        self.response.out.write('[' + ','.join(map(lambda s:'"'+s+'"', glist.data)) + ']')
+        self.response.out.write('[' + ','.join(map(lambda s:'"'+s+'"', glist)) + ']')
         
 class GetUploadURLHandler(webapp2.RequestHandler):
     def get(self):
