@@ -67,18 +67,12 @@ $ ->
         reader.readAsDataURL file
 
     drawImageWithImage = (img)->
-        canvas = document.createElement 'canvas'
-        canvas.width = canvas.height = IMAGE_SIZE
         if img.width > img.height
             [x, y, size] = [(img.width - img.height) >> 1, 0, img.height]
         else
             [x, y, size] = [0, (img.height - img.width) >> 1, img.width ]
-        canvas.context = canvas.getContext '2d'
-        canvas.context.drawImage img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE
-        imageData = canvas.context.getImageData 0, 0, IMAGE_SIZE, IMAGE_SIZE
-        for i in [0...imageData.data.length]
-            preview.imageData.data[i] = imageData.data[i]
-        preview.context.putImageData preview.imageData, 0, 0
+        preview.context.drawImage img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE
+        preview.imageData = preview.context.getImageData 0, 0, IMAGE_SIZE, IMAGE_SIZE
         preview.elem.src = preview.toDataURL()
         done.loadImage = true
 

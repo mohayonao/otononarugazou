@@ -94,21 +94,14 @@
       return reader.readAsDataURL(file);
     };
     drawImageWithImage = function(img) {
-      var canvas, i, imageData, size, x, y, _i, _ref, _ref1, _ref2;
-      canvas = document.createElement('canvas');
-      canvas.width = canvas.height = IMAGE_SIZE;
+      var size, x, y, _ref, _ref1;
       if (img.width > img.height) {
         _ref = [(img.width - img.height) >> 1, 0, img.height], x = _ref[0], y = _ref[1], size = _ref[2];
       } else {
         _ref1 = [0, (img.height - img.width) >> 1, img.width], x = _ref1[0], y = _ref1[1], size = _ref1[2];
       }
-      canvas.context = canvas.getContext('2d');
-      canvas.context.drawImage(img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
-      imageData = canvas.context.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
-      for (i = _i = 0, _ref2 = imageData.data.length; 0 <= _ref2 ? _i < _ref2 : _i > _ref2; i = 0 <= _ref2 ? ++_i : --_i) {
-        preview.imageData.data[i] = imageData.data[i];
-      }
-      preview.context.putImageData(preview.imageData, 0, 0);
+      preview.context.drawImage(img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      preview.imageData = preview.context.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
       preview.elem.src = preview.toDataURL();
       return done.loadImage = true;
     };
