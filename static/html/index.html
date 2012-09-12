@@ -23,6 +23,10 @@
       #dialog-time-label { margin-left:10px }
       footer { margin:15px 0 }
     </style>
+    <style media="only screen and (max-device-width: 480px)">
+      #preview-container { margin:15px 0;width:280px;height:280px;background:#333 }
+      #preview { width:280px;height:280px;background:#333 }
+    </style>
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-21613416-8']);
@@ -37,7 +41,7 @@
   <body>
     <div class="container">
       <h1><a href="/">音の鳴る画像</a></h1>
-      <p id="desc-for-mobile" class="hide">PC版 <strong>Chrome</strong> か <strong>Firefox</strong> で開いてください。</p>
+      <p id="desc-for-mobile" class="hide">PC版 <strong>Chrome</strong> か <strong>Firefox</strong> で開いて下さい。</p>
       <p id="desc-for-no-sound" class="hide">お使いのブラウザは対応していません。<strong>Chrome</strong> か <strong>Firefox</strong> で開いてください。</p>
       <p id="desc-for-moz" class="hide"><strong>音の鳴る画像</strong>を聞くことができます。画像を作成したい場合は <strong>Chrome</strong> で開いてください。</p>
       <p id="desc-for-webkit" class="hide"><strong>画像</strong>と<strong>音声ファイル</strong>をそれぞれドラッグ＆ドロップすると音の鳴る画像が作成できます。</p>
@@ -92,9 +96,10 @@
           アップロードしています。
         </div>
       </div>
-      <hr/>
-      
-      <footer>&copy; 2012 <a href="http://twitter.com/mohayonao">@mohayonao</a></footer>
+      <div class="hidden-phone">
+        <hr/>
+        <footer>&copy; 2012 <a href="http://twitter.com/mohayonao">@mohayonao</a></footer>
+      </div>
     </div>
     <script src="/js/jquery.min.js"></script>
     <script src="/js/jquery.socialbutton-1.9.0.min.js"></script>
