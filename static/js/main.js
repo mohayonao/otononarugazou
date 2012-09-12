@@ -328,17 +328,6 @@
       }
       return upload_url = null;
     });
-    $('#download').on('click', function() {
-      var data;
-      data = preview.toDataURL('image/png');
-      data = data.replace(/^.*,/, '');
-      return $('<form>').attr({
-        action: '/download',
-        method: 'POST'
-      }).append($('<input>').attr({
-        name: 'data'
-      }).val(data)).submit();
-    });
     return $(window).on('drop', function(e) {
       var file, type;
       file = e.originalEvent.dataTransfer.files[0];

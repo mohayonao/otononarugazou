@@ -232,14 +232,6 @@ $ ->
                     location.href = "/#{gazou_id}"
         upload_url = null
 
-    $('#download').on 'click', ->
-        data = preview.toDataURL 'image/png'
-        data = data.replace /^.*,/, ''
-        $('<form>')
-            .attr(action:'/download', method:'POST')
-            .append($('<input>').attr(name:'data').val(data))
-            .submit()
-
     $(window).on 'drop', (e)->
         file = e.originalEvent.dataTransfer.files[0]
         type = file.type.substr 0, 5
