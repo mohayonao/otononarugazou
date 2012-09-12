@@ -7,53 +7,44 @@ $ ->
     gazou_id = location.pathname.substr(1)
     done = loadImage:false, loadAudio:false
 
-    preview = document.createElement 'canvas'
-    preview.width = preview.height = IMAGE_SIZE
-    preview.context = preview.getContext '2d'
-    preview.imageData = preview.context.createImageData IMAGE_SIZE, IMAGE_SIZE
-    preview.elem = document.getElementById 'preview'
-
-    if gazou_id
-        img = new Image
-        img.onload = ->
-            drawImageWithImage img
-        img.onerror = (e)->
-            showAlert 'failed! 画像の読み込みに失敗しました。'
-        img.src = "/#{gazou_id}.png"
-
-    $.get '/list', (res)->
-        $list = $('#gazou-list')
-        res.forEach (id, i)->
-            if i >= 12 then return
-            $li  = $('<li>')
-            $a   = $('<a>').attr href:"/#{id}"
-            $img = $('<img>').attr src:"/#{id}.png"
-            $list.append $li.append($a.append($img))
-
-    # social-buttons
-    social_url = "http://#{location.host}/#{gazou_id}"
-    sb = $('#social-buttons')
-    $('.hatena', sb).socialbutton 'hatena',
-        button:"horizontal", url: social_url
-    $('.twitter', sb).socialbutton 'twitter',
-        button:'horizontal', lang:'en', url: social_url
-    $('.google', sb).socialbutton 'google_plusone',
-        size:'medium', lang:'ja', url: social_url
-    $('.facebook', sb).socialbutton 'facebook_like',
-        button:'button_count', url: social_url
-
     showAlert = (msg)->
         $('#alert').show('fast')
         $('#alert-message').text msg
     $('#alert-close').on 'click', ->
         $('#alert').hide('fast')
 
-    if timbre?.env != 'webkit'
-        showAlert 'Chromeで開いてください。'
-        return
+    preview = document.createElement 'canvas'
+    preview.width = preview.height = IMAGE_SIZE
+    preview.context = preview.getContext '2d'
+    preview.imageData = preview.context.createImageData IMAGE_SIZE, IMAGE_SIZE
+    preview.elem = document.getElementById 'preview'
 
-    timbre.workerpath = '/js/timbre.min.js'
+    drawImageWithImage = (img)->
+        if img.width > img.height
+            [x, y, size] = [(img.width - img.height) >> 1, 0, img.height]
+        else
+            [x, y, size] = [0, (img.height - img.width) >> 1, img.width ]
+        preview.context.drawImage img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE
+        preview.imageData = preview.context.getImageData 0, 0, IMAGE_SIZE, IMAGE_SIZE
+        preview.elem.src = preview.toDataURL()
+        done.loadImage = true
 
+    if gazou_id
+        img = new Image
+        img.onload = ->
+            drawImageWithImage img
+        img.onerror = (e)->
+            showAlert '画像の読み込みに失敗しました。'
+        img.src = "/#{gazou_id}.png"
+
+    isMobile = do ->
+        ua = navigator.userAgent
+        ['iPhone','Android','iPad','iPod'].some (x)->
+             ua.indexOf(x) != -1
+    if isMobile
+        return $('#desc-for-mobile').show()
+
+    # for PC ###################################################################
     loadImage = (file)->
         done.loadImage = done.loadAudio = false
         reader = new FileReader
@@ -66,15 +57,93 @@ $ ->
             img.src = reader.result
         reader.readAsDataURL file
 
-    drawImageWithImage = (img)->
-        if img.width > img.height
-            [x, y, size] = [(img.width - img.height) >> 1, 0, img.height]
-        else
-            [x, y, size] = [0, (img.height - img.width) >> 1, img.width ]
-        preview.context.drawImage img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE
-        preview.imageData = preview.context.getImageData 0, 0, IMAGE_SIZE, IMAGE_SIZE
-        preview.elem.src = preview.toDataURL()
-        done.loadImage = true
+    $.get '/list', (list)->
+        $list = $('#gazou-list')
+        fetch = ->
+            id = list.shift()
+            unless id then return
+            $li = $('<li>')
+            $a  = $('<a>').attr href:"/#{id}"
+            img = new Image
+            img.onload = fetch
+            img.src = "/#{id}.png"
+            $list.append $li.append $a.append(img)
+        fetch()
+
+    social_url = "http://#{location.host}/#{gazou_id}"
+    sb = $('#social-buttons')
+    $('.hatena', sb).socialbutton 'hatena',
+        button:"horizontal", url: social_url
+    $('.twitter', sb).socialbutton 'twitter',
+        button:'horizontal', lang:'en', url: social_url
+    $('.google', sb).socialbutton 'google_plusone',
+        size:'medium', lang:'ja', url: social_url
+    $('.facebook', sb).socialbutton 'facebook_like',
+        button:'button_count', url: social_url
+
+    $(window).on 'dragover', (e)->
+        false
+
+    $(window).on 'drop', (e)->
+        file = e.originalEvent.dataTransfer.files[0]
+        type = file.type.substr 0, 5
+        switch type
+            when 'image'
+                loadImage file
+            when 'audio'
+                if timbre?.env is 'webkit'
+                    loadAudio file
+                else showAlert '音声ファイルは Chrome でのみ扱えます。'
+            else showAlert 'よく分からないファイル形式です。'
+        false
+
+    # for timber ###############################################################
+    unless timbre?.isEnabled
+        return $('#desc-for-nosound').show()
+
+    timbre.workerpath = '/js/timbre.min.js'
+
+    Acme = -> @bang()
+    Acme.prototype = timbre.fn.buildPrototype Acme, {base:'ar-only'}
+
+    Acme.prototype.bang = ->
+        @sample = 0
+        @index  = 0
+        @value  = 0
+        @
+    Acme.prototype.seq = ->
+        if @index >= IMAGE_SIZE * IMAGE_SIZE * 4 and @callback
+            @callback()
+        for i in [0...@cell.length]
+            if @sample <= 0
+                i0 = (preview.imageData.data[@index + 0] or 0) & 0x03
+                i1 = (preview.imageData.data[@index + 1] or 0) & 0x03
+                i2 = (preview.imageData.data[@index + 2] or 0) & 0x03
+                value  = (i0 << 4) + (i1 << 2) + (i2 << 0)
+                @value = ((value - 32) / 32) * 0.8
+                @index  += 4
+                @sample += 1
+            @sample -= SAMPLERATE / timbre.samplerate
+            @cell[i] = @value
+        @cell
+    timbre.fn.register 'acme', Acme
+
+    master = T('lpf', 3800)
+    master.args[0] = T('acme')
+    master.args[0].callback = ->
+        master.pause()
+
+    $('#play').on 'click', ->
+        master.args[0].bang()
+        master.play()
+    $('#pause').on 'click', ->
+        master.pause()
+
+    # for webkit ###############################################################
+    if timbre?.env != 'webkit'
+        return $('#desc-for-moz').show()
+    $('#desc-for-webkit').show()
+    $('#upload').show()
 
     loadAudio = (file)->
         synth = loadAudio.synth = T('audio')
@@ -154,42 +223,6 @@ $ ->
                 wave[i1] * (1.0 - dv) + (wave[i1 + 1] or 0) * dv
         )
 
-    Acme = -> @bang()
-    Acme.prototype = timbre.fn.buildPrototype Acme, {base:'ar-only'}
-
-    Acme.prototype.bang = ->
-        @sample = 0
-        @index  = 0
-        @value  = 0
-        @
-    Acme.prototype.seq = ->
-        if @index >= IMAGE_SIZE * IMAGE_SIZE * 4 and @callback
-            @callback()
-        for i in [0...@cell.length]
-            if @sample <= 0
-                i0 = (preview.imageData.data[@index + 0] or 0) & 0x03
-                i1 = (preview.imageData.data[@index + 1] or 0) & 0x03
-                i2 = (preview.imageData.data[@index + 2] or 0) & 0x03
-                value  = (i0 << 4) + (i1 << 2) + (i2 << 0)
-                @value = ((value - 32) / 32) * 0.8
-                @index  += 4
-                @sample += 1
-            @sample -= SAMPLERATE / timbre.samplerate
-            @cell[i] = @value
-        @cell
-    timbre.fn.register "acme", Acme
-
-    master = T('lpf', 3800)
-    master.args[0] = T('acme')
-    master.args[0].callback = ->
-        master.pause()
-
-    $('#play').on 'click', ->
-        master.args[0].bang()
-        master.play()
-    $('#pause').on 'click', ->
-        master.pause()
-
     isUploaded = false
     upload_url = null
     $('#upload').on 'click', ->
@@ -225,12 +258,3 @@ $ ->
                 success: (gazou_id)->
                     location.href = "/#{gazou_id}"
         upload_url = null
-
-    $(window).on 'drop', (e)->
-        file = e.originalEvent.dataTransfer.files[0]
-        type = file.type.substr 0, 5
-        switch type
-            when 'audio' then loadAudio file
-            when 'image' then loadImage file
-            else showAlert 'よく分からないファイル形式です。'
-        false

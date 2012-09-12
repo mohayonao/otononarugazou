@@ -4,7 +4,7 @@
   $(function() {
     'use strict';
 
-    var Acme, IMAGE_SIZE, SAMPLERATE, dialogTimer, done, drawImageWithAudio, drawImageWithImage, gazou_id, img, isUploaded, loadAudio, loadImage, master, preview, sb, showAlert, social_url, stretch, upload_url;
+    var Acme, IMAGE_SIZE, SAMPLERATE, dialogTimer, done, drawImageWithAudio, drawImageWithImage, gazou_id, img, isMobile, isUploaded, loadAudio, loadImage, master, preview, sb, showAlert, social_url, stretch, upload_url;
     SAMPLERATE = 8000;
     IMAGE_SIZE = 400;
     gazou_id = location.pathname.substr(1);
@@ -12,38 +12,85 @@
       loadImage: false,
       loadAudio: false
     };
+    showAlert = function(msg) {
+      $('#alert').show('fast');
+      return $('#alert-message').text(msg);
+    };
+    $('#alert-close').on('click', function() {
+      return $('#alert').hide('fast');
+    });
     preview = document.createElement('canvas');
     preview.width = preview.height = IMAGE_SIZE;
     preview.context = preview.getContext('2d');
     preview.imageData = preview.context.createImageData(IMAGE_SIZE, IMAGE_SIZE);
     preview.elem = document.getElementById('preview');
+    drawImageWithImage = function(img) {
+      var size, x, y, _ref, _ref1;
+      if (img.width > img.height) {
+        _ref = [(img.width - img.height) >> 1, 0, img.height], x = _ref[0], y = _ref[1], size = _ref[2];
+      } else {
+        _ref1 = [0, (img.height - img.width) >> 1, img.width], x = _ref1[0], y = _ref1[1], size = _ref1[2];
+      }
+      preview.context.drawImage(img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      preview.imageData = preview.context.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
+      preview.elem.src = preview.toDataURL();
+      return done.loadImage = true;
+    };
     if (gazou_id) {
       img = new Image;
       img.onload = function() {
         return drawImageWithImage(img);
       };
       img.onerror = function(e) {
-        return showAlert('failed! 画像の読み込みに失敗しました。');
+        return showAlert('画像の読み込みに失敗しました。');
       };
       img.src = "/" + gazou_id + ".png";
     }
-    $.get('/list', function(res) {
-      var $list;
+    isMobile = (function() {
+      var ua;
+      ua = navigator.userAgent;
+      return ['iPhone', 'Android', 'iPad', 'iPod'].some(function(x) {
+        return ua.indexOf(x) !== -1;
+      });
+    })();
+    if (isMobile) {
+      return $('#desc-for-mobile').show();
+    }
+    loadImage = function(file) {
+      var reader;
+      done.loadImage = done.loadAudio = false;
+      reader = new FileReader;
+      reader.onload = function() {
+        img = new Image;
+        img.onload = function() {
+          return drawImageWithImage(img);
+        };
+        img.onerror = function() {
+          return console.log('画像の読み込みに失敗しました。');
+        };
+        return img.src = reader.result;
+      };
+      return reader.readAsDataURL(file);
+    };
+    $.get('/list', function(list) {
+      var $list, fetch;
       $list = $('#gazou-list');
-      return res.forEach(function(id, i) {
-        var $a, $img, $li;
-        if (i >= 12) {
+      fetch = function() {
+        var $a, $li, id;
+        id = list.shift();
+        if (!id) {
           return;
         }
         $li = $('<li>');
         $a = $('<a>').attr({
           href: "/" + id
         });
-        $img = $('<img>').attr({
-          src: "/" + id + ".png"
-        });
-        return $list.append($li.append($a.append($img)));
-      });
+        img = new Image;
+        img.onload = fetch;
+        img.src = "/" + id + ".png";
+        return $list.append($li.append($a.append(img)));
+      };
+      return fetch();
     });
     social_url = "http://" + location.host + "/" + gazou_id;
     sb = $('#social-buttons');
@@ -65,46 +112,83 @@
       button: 'button_count',
       url: social_url
     });
-    showAlert = function(msg) {
-      $('#alert').show('fast');
-      return $('#alert-message').text(msg);
-    };
-    $('#alert-close').on('click', function() {
-      return $('#alert').hide('fast');
+    $(window).on('dragover', function(e) {
+      return false;
     });
-    if ((typeof timbre !== "undefined" && timbre !== null ? timbre.env : void 0) !== 'webkit') {
-      showAlert('Chromeで開いてください。');
-      return;
+    $(window).on('drop', function(e) {
+      var file, type;
+      file = e.originalEvent.dataTransfer.files[0];
+      type = file.type.substr(0, 5);
+      switch (type) {
+        case 'image':
+          loadImage(file);
+          break;
+        case 'audio':
+          if ((typeof timbre !== "undefined" && timbre !== null ? timbre.env : void 0) === 'webkit') {
+            loadAudio(file);
+          } else {
+            showAlert('音声ファイルは Chrome でのみ扱えます。');
+          }
+          break;
+        default:
+          showAlert('よく分からないファイル形式です。');
+      }
+      return false;
+    });
+    if (!(typeof timbre !== "undefined" && timbre !== null ? timbre.isEnabled : void 0)) {
+      return $('#desc-for-nosound').show();
     }
     timbre.workerpath = '/js/timbre.min.js';
-    loadImage = function(file) {
-      var reader;
-      done.loadImage = done.loadAudio = false;
-      reader = new FileReader;
-      reader.onload = function() {
-        img = new Image;
-        img.onload = function() {
-          return drawImageWithImage(img);
-        };
-        img.onerror = function() {
-          return console.log('画像の読み込みに失敗しました。');
-        };
-        return img.src = reader.result;
-      };
-      return reader.readAsDataURL(file);
+    Acme = function() {
+      return this.bang();
     };
-    drawImageWithImage = function(img) {
-      var size, x, y, _ref, _ref1;
-      if (img.width > img.height) {
-        _ref = [(img.width - img.height) >> 1, 0, img.height], x = _ref[0], y = _ref[1], size = _ref[2];
-      } else {
-        _ref1 = [0, (img.height - img.width) >> 1, img.width], x = _ref1[0], y = _ref1[1], size = _ref1[2];
+    Acme.prototype = timbre.fn.buildPrototype(Acme, {
+      base: 'ar-only'
+    });
+    Acme.prototype.bang = function() {
+      this.sample = 0;
+      this.index = 0;
+      this.value = 0;
+      return this;
+    };
+    Acme.prototype.seq = function() {
+      var i, i0, i1, i2, value, _i, _ref;
+      if (this.index >= IMAGE_SIZE * IMAGE_SIZE * 4 && this.callback) {
+        this.callback();
       }
-      preview.context.drawImage(img, x, y, size, size, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
-      preview.imageData = preview.context.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
-      preview.elem.src = preview.toDataURL();
-      return done.loadImage = true;
+      for (i = _i = 0, _ref = this.cell.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+        if (this.sample <= 0) {
+          i0 = (preview.imageData.data[this.index + 0] || 0) & 0x03;
+          i1 = (preview.imageData.data[this.index + 1] || 0) & 0x03;
+          i2 = (preview.imageData.data[this.index + 2] || 0) & 0x03;
+          value = (i0 << 4) + (i1 << 2) + (i2 << 0);
+          this.value = ((value - 32) / 32) * 0.8;
+          this.index += 4;
+          this.sample += 1;
+        }
+        this.sample -= SAMPLERATE / timbre.samplerate;
+        this.cell[i] = this.value;
+      }
+      return this.cell;
     };
+    timbre.fn.register('acme', Acme);
+    master = T('lpf', 3800);
+    master.args[0] = T('acme');
+    master.args[0].callback = function() {
+      return master.pause();
+    };
+    $('#play').on('click', function() {
+      master.args[0].bang();
+      return master.play();
+    });
+    $('#pause').on('click', function() {
+      return master.pause();
+    });
+    if ((typeof timbre !== "undefined" && timbre !== null ? timbre.env : void 0) !== 'webkit') {
+      return $('#desc-for-moz').show();
+    }
+    $('#desc-for-webkit').show();
+    $('#upload').show();
     loadAudio = function(file) {
       var synth;
       synth = loadAudio.synth = T('audio');
@@ -223,51 +307,6 @@
         return _results;
       })());
     };
-    Acme = function() {
-      return this.bang();
-    };
-    Acme.prototype = timbre.fn.buildPrototype(Acme, {
-      base: 'ar-only'
-    });
-    Acme.prototype.bang = function() {
-      this.sample = 0;
-      this.index = 0;
-      this.value = 0;
-      return this;
-    };
-    Acme.prototype.seq = function() {
-      var i, i0, i1, i2, value, _i, _ref;
-      if (this.index >= IMAGE_SIZE * IMAGE_SIZE * 4 && this.callback) {
-        this.callback();
-      }
-      for (i = _i = 0, _ref = this.cell.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        if (this.sample <= 0) {
-          i0 = (preview.imageData.data[this.index + 0] || 0) & 0x03;
-          i1 = (preview.imageData.data[this.index + 1] || 0) & 0x03;
-          i2 = (preview.imageData.data[this.index + 2] || 0) & 0x03;
-          value = (i0 << 4) + (i1 << 2) + (i2 << 0);
-          this.value = ((value - 32) / 32) * 0.8;
-          this.index += 4;
-          this.sample += 1;
-        }
-        this.sample -= SAMPLERATE / timbre.samplerate;
-        this.cell[i] = this.value;
-      }
-      return this.cell;
-    };
-    timbre.fn.register("acme", Acme);
-    master = T('lpf', 3800);
-    master.args[0] = T('acme');
-    master.args[0].callback = function() {
-      return master.pause();
-    };
-    $('#play').on('click', function() {
-      master.args[0].bang();
-      return master.play();
-    });
-    $('#pause').on('click', function() {
-      return master.pause();
-    });
     isUploaded = false;
     upload_url = null;
     $('#upload').on('click', function() {
@@ -288,7 +327,7 @@
         return $('#upload-dialog').modal('show');
       });
     });
-    $('#upload-dialog').on('shown', function() {
+    return $('#upload-dialog').on('shown', function() {
       var blob, data, formData, x;
       if (upload_url) {
         isUploaded = true;
@@ -320,22 +359,6 @@
         });
       }
       return upload_url = null;
-    });
-    return $(window).on('drop', function(e) {
-      var file, type;
-      file = e.originalEvent.dataTransfer.files[0];
-      type = file.type.substr(0, 5);
-      switch (type) {
-        case 'audio':
-          loadAudio(file);
-          break;
-        case 'image':
-          loadImage(file);
-          break;
-        default:
-          showAlert('よく分からないファイル形式です。');
-      }
-      return false;
     });
   });
 

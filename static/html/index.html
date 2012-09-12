@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <title>音の鳴る画像</title>
-    <meta name="description" content="画像ファイルに音声を埋め込めるウェブサービスです。"/>
+    <meta name="description" content="画像ファイルに音声を埋め込めるウェブサービスです。">
     <meta property="og:title" content="音の鳴る画像"/>
-    <meta property="og:url" content="http://otononarugazou.appspot.com"/>
-    <meta property="og:image" content="http://otononarugazou.appspot.com/img/otononarugazou.png"/>
-    <link rel="shortcut icon" href="/img/favicon.ico"/>
-    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <meta property="og:url" content="http://otononarugazou.appspot.com">
+    <meta property="og:image" content="http://otononarugazou.appspot.com/img/otononarugazou.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
     <style>
       #social-buttons { position:relative;top:-2px;display:inline;margin-right:100px }
       #social-buttons div { display:inline }
@@ -35,27 +37,35 @@
   <body>
     <div class="container">
       <h1><a href="/">音の鳴る画像</a></h1>
-      <p><strong>画像ファイル</strong>と<strong>音声ファイル</strong>をそれぞれドラッグ＆ドロップすると音の鳴る画像ができます</p>
-      <div class="alert alert-error" id="alert" style="display:none">
+      <p id="desc-for-mobile" class="hide">PC版 <strong>Chrome</strong> か <strong>Firefox</strong> で開いてください。</p>
+      <p id="desc-for-no-sound" class="hide">お使いのブラウザは対応していません。<strong>Chrome</strong> か <strong>Firefox</strong> で開いてください。</p>
+      <p id="desc-for-moz" class="hide"><strong>音の鳴る画像</strong>を聞くことができます。画像を作成したい場合は <strong>Chrome</strong> で開いてください。</p>
+      <p id="desc-for-webkit" class="hide"><strong>画像</strong>と<strong>音声ファイル</strong>をそれぞれドラッグ＆ドロップすると音の鳴る画像が作成できます。</p>
+      <div class="alert alert-error hide" id="alert">
         <button type="button" class="close" id="alert-close">×</button>
         <span id="alert-message"></span>
       </div>
       <div class="row">
         <div class="span9">
-          <button class="btn btn-small" id="play"><i class="icon-play"></i> Play</button>
-          <button class="btn btn-small" id="pause"><i class="icon-pause"></i> Pause</button>
-          <div class="unstyled pull-right" id="social-buttons">
-            <div class="hatena"></div>
-            <div class="twitter"></div>
-            <div class="google"></div>
-            <div class="facebook"></div>
+          <div class="hidden-phone">
+            <button class="btn btn-small" id="play"><i class="icon-play"></i> Play</button>
+            <button class="btn btn-small" id="pause"><i class="icon-pause"></i> Pause</button>
+            
+            <div class="unstyled pull-right" id="social-buttons">
+              <div class="hatena"></div>
+              <div class="twitter"></div>
+              <div class="google"></div>
+              <div class="facebook"></div>
+            </div>
           </div>
           <div id="preview-container">
             <img id="preview" title="音の鳴る画像" alt="音の鳴る画像"/>
           </div>
-          <button class="btn btn-large" id="upload"><i class="icon-upload"></i> アップロード</button>
+          <div class="hidden-phone">
+            <button class="btn btn-large hide" id="upload"><i class="icon-upload"></i> アップロード</button>
+          </div>
         </div>
-        <div class="span3">
+        <div class="span3 hidden-phone">
           <h5>最近の音の鳴る画像</h5>
           <ul class="unstyled" id="gazou-list"></ul>
         </div>
