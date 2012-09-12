@@ -67,10 +67,22 @@ class ListHandler(webapp2.RequestHandler):
 class GetUploadURLHandler(webapp2.RequestHandler):
     def get(self):
         self.response.out.write(blobstore.create_upload_url('/upload'))
+
+class RemoveHandler(webapp2.RequestHandler):
+    def get(self, gazou_id):
+        blobstore.delete(gazou_id)
+
+        glist = GazouKeyList.get_or_insert('recent')
+        if gazou_id in glist.data:
+            glist.data.remove(gazou_id)
+            glist.save()
+            memcache.set('recent', glist.data)
+        self.redirect('/')
         
 app = webapp2.WSGIApplication([
         ('^/upload$'        , UploadHandler      ),
         ('^/(.+)\.png$'     , ServeHandler       ),
         ('^/list$'          , ListHandler        ),
         ('^/get_upload_url$', GetUploadURLHandler),
+        ('^/rm/(.+)$'       , RemoveHandler      ),
         ], debug=True)

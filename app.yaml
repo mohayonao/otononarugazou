@@ -16,6 +16,10 @@ handlers:
 - url: /((.+)\.png|upload|list|get_upload_url)
   script: main.app
 
+- url: /rm/(.+)
+  script: main.app
+  login: admin
+
 - url: .*
   static_files: static/html/index.html
   upload: static/html/index.html
