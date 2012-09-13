@@ -20,6 +20,10 @@ handlers:
   script: main.app
   login: admin
 
+- url: /(.*)/
+  static_files: static/html/\1.html
+  upload: static/html/(.*).html
+
 - url: .*
   static_files: static/html/index.html
   upload: static/html/index.html
